@@ -2,6 +2,16 @@
 
 Un mini-SOC construit à la main avec Splunk Enterprise (Docker), inspiré d'un rapport de stage sur les solutions SOC/SIEM NextGen (Arismore, 2017). Toutes les données sont synthétiques.
 
+## Aperçu
+
+![Vue ensemble](docs/images/01-vue-ensemble.png)
+
+![Tableau de bord VPN](docs/images/02-vpn.png)
+
+![Chronologie incident](docs/images/03-chronologie-incident-b.png)
+
+![Chasse aux menaces](docs/images/04-chasse-aux-menaces.png)
+
 ## Ce que contient le lab
 
 | Domaine | Détail |
