@@ -1,0 +1,61 @@
+<form version="1.1" theme="dark">
+  <label>AriSOC_VPN</label>
+  <fieldset submitButton="false">
+    <input type="time" token="t">
+      <label>Intervalle de temps</label>
+      <default><earliest>0</earliest><latest></latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Sessions réussies</title>
+      <single>
+        <search><query>index=fw_athena process=openvpn action=success | stats count</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="colorMode">block</option>
+        <option name="useColors">1</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Sessions échouées</title>
+      <single>
+        <search><query>index=fw_athena process=openvpn action=failure | stats count</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="colorMode">block</option>
+        <option name="useColors">1</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Utilisateurs connectés au VPN et leurs adresses IP</title>
+      <table>
+        <search><query><![CDATA[index=fw_athena process=openvpn action=success user=* IPv4=* | iplocation src_ip | table _time user src_ip src_port IPv4 Country City | sort - _time | convert ctime(_time)]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Sources des connexions VPN</title>
+      <map>
+        <search><query><![CDATA[index=fw_athena process=openvpn user=* | iplocation src_ip | geostats count by user]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="mapping.map.center">(40,5)</option>
+        <option name="mapping.map.zoom">3</option>
+      </map>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Échecs d'authentification par IP source</title>
+      <table>
+        <search><query><![CDATA[index=fw_athena process=openvpn action=failure | stats count AS echecs dc(user) AS nb_comptes values(user) AS comptes by src_ip | iplocation src_ip | table src_ip Country City echecs nb_comptes comptes | sort - echecs]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+</form>

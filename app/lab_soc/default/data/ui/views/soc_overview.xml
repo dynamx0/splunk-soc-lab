@@ -1,0 +1,51 @@
+<form version="1.1" theme="dark">
+  <label>SOC - Vue d'ensemble</label>
+  <fieldset submitButton="false">
+    <input type="time" token="t">
+      <label>Période</label>
+      <default><earliest>0</earliest><latest></latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Événements indexés</title>
+      <single>
+        <search><query><![CDATA[| tstats count where index IN (fw_athena, firewall, wineventlog, sysmon, dns, proxy, loki)]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="numberPrecision">0</option>
+      </single>
+    </panel>
+  </row>
+    <row>
+    <panel>
+      <title>Volume par index</title>
+      <chart>
+        <search><query><![CDATA[| tstats count where index IN (fw_athena, firewall, wineventlog, sysmon, dns, proxy, loki) by _time index span=1h | timechart span=1h sum(count) by index]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Alertes déclenchées</title>
+      <single>
+        <search><query><![CDATA[index=_audit action=alert_fired ss_app=lab_soc | stats count]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Alertes déclenchées par règle</title>
+      <table>
+        <search><query><![CDATA[index=_audit action=alert_fired ss_app=lab_soc | stats count AS declenchements latest(_time) AS derniere by ss_name severity | convert ctime(derniere) | sort - severity]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+</form>
+

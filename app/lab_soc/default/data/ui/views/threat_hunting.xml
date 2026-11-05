@@ -1,0 +1,89 @@
+<form version="1.1" theme="dark">
+  <label>Chasse aux menaces</label>
+  <fieldset submitButton="false">
+    <input type="time" token="t">
+      <label>Période</label>
+      <default><earliest>0</earliest><latest></latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>1. Distribution : téléchargement d'exécutable puis rafale de requêtes (proxy)</title>
+      <table>
+        <search><query><![CDATA[index=proxy [search index=proxy file="*.exe" | dedup clientip | table clientip] | transaction maxspan=60s maxpause=5s clientip | where eventcount>10 | table _time clientip user eventcount duration]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>2. Installation : exécutables rares et inconnus</title>
+      <table>
+        <search><query><![CDATA[index=sysmon EventCode=1 | stats dc(host) AS nb_postes count AS lancements values(host) AS postes by Image sha1 | lookup sha1_lookup sha1 OUTPUT whitelisted_file | sort + nb_postes]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+    <panel>
+      <title>2. Installation : programmes inscrits au démarrage (clé Run)</title>
+      <table>
+        <search><query><![CDATA[index=sysmon EventCode=13 TargetObject="*CurrentVersion*Run*" | stats count AS nb by host Image TargetObject Details]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>3. C&amp;C : nombre de requêtes DNS par poste</title>
+      <chart>
+        <search><query><![CDATA[index=dns | stats count AS Requests by clientip | sort - Requests]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>3. C&amp;C : longueur des requêtes DNS (noms uniques)</title>
+      <table>
+        <search><query><![CDATA[index=dns | eval Length=len(query) | stats count AS requetes dc(query) AS uniques by Length | sort - uniques]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>3. C&amp;C : trafic autorisé vers une adresse de la liste noire</title>
+      <table>
+        <search><query><![CDATA[index=firewall action=pass | lookup malicious clientip AS dst_ip OUTPUT threat ti_source | where threat!="clean" | stats count AS connexions sum(bytes) AS octets by src_ip dst_ip threat ti_source]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>4. Mission : effacement des journaux (1102 / 517)</title>
+      <table>
+        <search><query><![CDATA[index=wineventlog (EventCode=1102 OR EventCode=517) | table _time ComputerName Account_Name src_ip Message]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+    <panel>
+      <title>4. Mission : ransomware (plus de 10 fichiers par minute)</title>
+      <table>
+        <search><query><![CDATA[index=sysmon EventCode=11 | bin _time span=1m | stats count AS nouveaux_fichiers by _time host Image sha1 | where nouveaux_fichiers>10 | lookup sha1_lookup sha1 OUTPUT whitelisted_file | sort - nouveaux_fichiers]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <format type="color" field="whitelisted_file">
+          <colorPalette type="map">{"INTROUVABLE":#DC4E41}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>APT : résultats du scanner Loki</title>
+      <table>
+        <search><query><![CDATA[index=loki | stats latest(_time) AS dernier_scan count(eval(level="ALERT")) AS alertes count(eval(level="WARNING")) AS warnings max(score) AS score_max by host | convert ctime(dernier_scan) | sort - score_max]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+</form>

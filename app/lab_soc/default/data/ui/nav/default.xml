@@ -1,0 +1,12 @@
+<nav search_view="search" color="#1A3A5C">
+  <view name="soc_overview" default="true" />
+  <collection label="AriSOC">
+    <view name="arisoc_fw" />
+    <view name="arisoc_vpn" />
+    <view name="arisoc_utilisateur" />
+  </collection>
+  <view name="threat_hunting" />
+  <view name="search" />
+  <a href="alerts">Alertes</a>
+  <a href="reports">Rapports</a>
+</nav>

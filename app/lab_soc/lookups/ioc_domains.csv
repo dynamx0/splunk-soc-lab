@@ -1,0 +1,2 @@
+domain,threat,ti_source
+*.badlab.example,Infrastructure malveillante (lab),OTX (simule)

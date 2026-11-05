@@ -1,0 +1,92 @@
+<form version="1.1" theme="dark">
+  <label>AriSOC_Utilisateur</label>
+  <fieldset submitButton="false">
+    <input type="time" token="t">
+      <label>Intervalle de temps</label>
+      <default><earliest>0</earliest><latest></latest></default>
+    </input>
+    <input type="dropdown" token="user">
+      <label>Utilisateur</label>
+      <fieldForLabel>user</fieldForLabel><fieldForValue>user</fieldForValue>
+      <search><query>| inputlookup identities.csv | table user</query></search>
+      <default>sophie.durand</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Connexions AD échouées</title>
+      <single>
+        <search><query>index=wineventlog (EventCode=4771 OR EventCode=4625) Account_Name="$user$" | stats count</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="colorMode">none</option>
+        <option name="useColors">1</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[3]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Connexions AD réussies</title>
+      <single>
+        <search><query>index=wineventlog EventCode=4624 Account_Name="$user$" | stats count</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="colorMode">none</option>
+        <option name="useColors">1</option>
+        <option name="rangeColors">["0x53a051","0x53a051"]</option>
+        <option name="rangeValues">[0]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Identité</title>
+      <table>
+        <search><query>| inputlookup identities.csv where user="$user$" | table nom departement poste ip pays_habituel</query></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Supervision du serveur de fichiers : accès de $user$</title>
+      <table>
+        <search><query><![CDATA[index=wineventlog EventCode=5145 Account_Name="$user$" | table _time Share_Name Relative_Target_Name Accesses src_ip | sort - _time | convert ctime(_time)]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Partages les plus utilisés</title>
+      <chart>
+        <search><query>index=wineventlog EventCode=5145 Account_Name="$user$" | top limit=10 Share_Name</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions sur le serveur de fichiers</title>
+      <chart>
+        <search><query>index=wineventlog EventCode=5145 Account_Name="$user$" | stats count by Accesses</query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Domaines visités (avec la liste noire)</title>
+      <table>
+        <search><query><![CDATA[index=proxy user="$user$" | lookup ioc_domains domain OUTPUT threat | stats count latest(_time) AS dernier by domain threat | sort - count | convert ctime(dernier)]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <format type="color" field="threat">
+          <colorPalette type="map">{"clean":#53A051}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>Programmes inconnus sur le poste (Sysmon, hors liste blanche)</title>
+      <table>
+        <search><query><![CDATA[| inputlookup identities.csv where user="$user$" | fields poste | rename poste AS host | join type=inner host [search index=sysmon EventCode=1 | lookup sha1_lookup sha1 OUTPUT whitelisted_file | where whitelisted_file="INTROUVABLE" | stats count min(_time) AS premiere_vue by host Image sha1] | convert ctime(premiere_vue)]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+</form>

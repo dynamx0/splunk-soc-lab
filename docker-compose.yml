@@ -1,0 +1,23 @@
+services:
+  splunk:
+    image: splunk/splunk:9.4.15
+    container_name: splunk-soc-lab
+    platform: linux/amd64
+    environment:
+      SPLUNK_START_ARGS: "--accept-license"
+      SPLUNK_GENERAL_TERMS: "--accept-sgt-current-at-splunk-com"
+      SPLUNK_PASSWORD: "${SPLUNK_PASSWORD}"
+      TZ: "Europe/Paris"
+    ports:
+      - "8000:8000"
+      - "8089:8089"
+      - "9997:9997"
+      - "514:1514/udp"
+    volumes:
+      - ./app/lab_soc:/opt/splunk/etc/apps/lab_soc
+      - ./data:/opt/lab_data:ro
+      - splunk-var:/opt/splunk/var
+    restart: unless-stopped
+
+volumes:
+  splunk-var:

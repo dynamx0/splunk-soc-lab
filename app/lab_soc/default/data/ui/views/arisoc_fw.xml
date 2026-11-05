@@ -1,0 +1,54 @@
+<form version="1.1" theme="dark">
+  <label>AriSOC_FW</label>
+  <fieldset submitButton="false">
+    <input type="time" token="t">
+      <label>Intervalle de temps</label>
+      <default><earliest>0</earliest><latest></latest></default>
+    </input>
+    <input type="dropdown" token="action">
+      <label>Action</label>
+      <choice value="block">Bloqué</choice>
+      <choice value="pass">Autorisé</choice>
+      <choice value="*">Toutes</choice>
+      <default>block</default>
+    </input>
+    <input type="dropdown" token="dir">
+      <label>Direction</label>
+      <choice value="in">In</choice>
+      <choice value="out">Out</choice>
+      <choice value="*">Toutes</choice>
+      <default>in</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Top pays source</title>
+      <chart>
+        <search><query><![CDATA[index=firewall action="$action$" direction="$dir$" NOT src_ip=10.* | iplocation src_ip | top limit=10 Country]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Origine du trafic (géolocalisation de l'IP source)</title>
+      <map>
+        <search><query><![CDATA[index=firewall action="$action$" direction="$dir$" NOT src_ip=10.* | iplocation src_ip | geostats count by dst_port]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="mapping.type">marker</option>
+        <option name="mapping.map.center">(40,10)</option>
+        <option name="mapping.map.zoom">2</option>
+      </map>
+    </panel>
+    <panel>
+      <title>Tentatives par port de destination</title>
+      <table>
+        <search><query><![CDATA[index=firewall action="$action$" direction="$dir$" | stats sparkline count values(src_ip) AS "IP Source" by dst_port | sort - count | rename dst_port AS "Port destination"]]></query>
+          <earliest>$t.earliest$</earliest><latest>$t.latest$</latest></search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+</form>
