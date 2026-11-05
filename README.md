@@ -1,6 +1,6 @@
 # Lab SOC avec Splunk
 
-Un mini-SOC construit à la main avec Splunk Enterprise (Docker), inspiré d'un rapport de stage sur les solutions SOC/SIEM NextGen (Arismore, 2017). Toutes les données sont synthétiques.
+Un mini-SOC construit à la main avec Splunk Enterprise (Docker) pour pratiquer la collecte de logs, la détection et l'investigation. Toutes les données sont synthétiques.
 
 ## Aperçu
 
