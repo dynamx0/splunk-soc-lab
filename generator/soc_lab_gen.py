@@ -183,7 +183,7 @@ def baseline_day(s, day):
 
 
 def sc_vpn_impossible_travel(s, t):
-    """Meme utilisateur VPN depuis deux lieux eloignes (regle 2 du rapport)."""
+    """Meme utilisateur VPN depuis deux lieux eloignes."""
     vpn(s, t, "alice.martin", USERS["alice.martin"][2], ok=True, ipv4="10.8.0.41")
     vpn(s, t + timedelta(minutes=25), "alice.martin", FOREIGN_IPS["BR"], ok=True, ipv4="10.8.0.42")
 
